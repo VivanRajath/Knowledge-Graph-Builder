@@ -3,7 +3,8 @@ from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from .models import Ontology
 from .serializers import OntologySerializer
-from .faiss_index import query_top_k, build_index
+from .faiss_index import query_top_k, build_index, load_index
+import os
 import networkx as nx
 from collections import deque
 
@@ -100,13 +101,16 @@ def search_graph(request):
         # fallback to aggregated
         return aggregated_graph(request)
 
-    # ensure index is available; schedule background build if missing to avoid blocking
+    # try to load existing index; building is expensive so only build when enabled
     try:
-        from .faiss_index import ensure_index
-        ensure_index(background=True)
+        load_index()
     except Exception:
-        # fallback: proceed without blocking
         pass
+    if os.environ.get('DJANGO_BUILD_FAISS', 'false').lower() in ('1','true','yes'):
+        try:
+            build_index()
+        except Exception:
+            pass
 
     results = query_top_k(q, k=k)
 

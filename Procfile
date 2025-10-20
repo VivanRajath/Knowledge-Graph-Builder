@@ -1,1 +1,1 @@
-web: gunicorn django_backend.wsgi --bind 0.0.0.0:$PORT --workers 3
+web: gunicorn django_backend.wsgi --bind 0.0.0.0:$PORT --workers ${WEB_CONCURRENCY:-1} --timeout ${GUNICORN_TIMEOUT:-60} --graceful-timeout ${GUNICORN_GRACE:-30} --max-requests ${GUNICORN_MAX_REQUESTS:-1000} --max-requests-jitter ${GUNICORN_MAX_REQUESTS_JITTER:-50}

@@ -64,9 +64,15 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-
 # During development also look for static assets in the repo-level frontend/ folder
-STATICFILES_DIRS = [BASE_DIR.parent / 'frontend']
+# Add frontend dir to STATICFILES_DIRS only if it exists; prevents warnings in
+# environments (Render) where the path does not exist.
+FRONTEND_DIR = BASE_DIR.parent / 'frontend'
+if FRONTEND_DIR.exists():
+    STATICFILES_DIRS = [FRONTEND_DIR]
+else:
+    STATICFILES_DIRS = []
+
 
 # Whitenoise setup
 MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
