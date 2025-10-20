@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual env
+venv/
+.venv/
+
+# Local database
+django_backend/db.sqlite3
+
+# FAISS index
+django_backend/faiss.index
+
+# Environment files
+.env
+.env.*
+
+# Node/Frontend
+node_modules/
+dist/
+
+# Ignore the Ontology generator (already hosted on HF Spaces)
+Ontology-Generator/
+
+# Logs
+*.log
+
