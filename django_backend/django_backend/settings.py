@@ -7,7 +7,10 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'dev-secret')
 # Force DEBUG for local development unless explicitly disabled
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes')
 # Keep ALLOWED_HOSTS minimal for local runs; allow override via env
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.environ.get(
+    'DJANGO_ALLOWED_HOSTS',
+    'localhost,127.0.0.1,knowledge-graph-builder-z14q.onrender.com'
+).split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
