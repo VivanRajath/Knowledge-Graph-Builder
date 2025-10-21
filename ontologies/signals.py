@@ -14,23 +14,9 @@ _DEBOUNCE_SECONDS = 2.0
 
 
 def _schedule_rebuild():
-    global _debounce_timer
-
-    def _worker():
-        # small sleep to collect additional events
-        time.sleep(_DEBOUNCE_SECONDS)
-        try:
-            faiss_index.build_index()
-        except Exception:
-            # never let signal handlers raise
-            pass
-
-    with _debounce_lock:
-        if _debounce_timer and _debounce_timer.is_alive():
-            # already scheduled
-            return
-        _debounce_timer = threading.Thread(target=_worker, daemon=True)
-        _debounce_timer.start()
+    # Indexing is handled by the remote service (HF Space). Do not schedule
+    # local rebuilds in the Django web process to avoid heavy work.
+    return
 
 
 @receiver(post_save, sender=Ontology)

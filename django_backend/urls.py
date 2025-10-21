@@ -17,5 +17,7 @@ def home(request):
 urlpatterns = [
     path('', home, name='home'),
     path('admin/', admin.site.urls),
-    path('api/', include('ontologies.urls')),
+    # include the Django app using the explicit package path to avoid
+    # collisions with the repo-level `ontologies` package
+    path('api/', include('django_backend.ontologies.urls')),
 ]

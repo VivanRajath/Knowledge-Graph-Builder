@@ -3,9 +3,89 @@ from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from .models import Ontology
 from .serializers import OntologySerializer
-from .faiss_index import query_top_k, build_index
+from .faiss_index import build_index
+import re
+from typing import List, Tuple
+
+# --- Lightweight local semantic helpers (dependency-free) ---
+_token_re = re.compile(r"\w+", re.UNICODE)
+
+def _tokens(text: str):
+    return _token_re.findall((text or '').lower())
+
+def _collect_text(obj, depth: int = 0) -> List[Tuple[str, float]]:
+    texts: List[Tuple[str, float]] = []
+    if obj is None:
+        return texts
+    if isinstance(obj, str):
+        texts.append((obj, max(1.0, 3.0 - depth * 0.3)))
+        return texts
+    if isinstance(obj, (int, float, bool)):
+        texts.append((str(obj), 1.0))
+        return texts
+    if isinstance(obj, list):
+        for item in obj:
+            texts.extend(_collect_text(item, depth + 1))
+        return texts
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            key_low = str(k).lower()
+            key_weight = 1.0
+            if any(x in key_low for x in ('label', 'name', 'title', 'desc', 'summary')):
+                key_weight = 2.5
+            if isinstance(v, (str, int, float, bool)):
+                texts.append((str(v), key_weight))
+            else:
+                for t, w in _collect_text(v, depth + 1):
+                    texts.append((t, w * key_weight))
+        return texts
+    try:
+        s = str(obj)
+        texts.append((s, 1.0))
+    except Exception:
+        pass
+    return texts
+
+def _score_query_against_doc(query: str, doc_obj: dict) -> float:
+    q_tokens = set(_tokens(query))
+    if not q_tokens:
+        return 0.0
+    collected = _collect_text(doc_obj)
+    if not collected:
+        return 0.0
+    token_weights = {}
+    for text, weight in collected:
+        for t in _tokens(text):
+            token_weights[t] = token_weights.get(t, 0.0) + float(weight)
+    if not token_weights:
+        return 0.0
+    intersect = 0.0
+    doc_sum = 0.0
+    for t, w in token_weights.items():
+        doc_sum += w
+        if t in q_tokens:
+            intersect += w
+    if doc_sum <= 0:
+        return 0.0
+    score = intersect / (doc_sum + len(q_tokens))
+    return float(score)
+
+def query_top_k_local(text: str, k: int = 5):
+    results = []
+    for o in Ontology.objects.all():
+        ont = o.json or {}
+        s = _score_query_against_doc(text, ont)
+        if s > 0:
+            results.append({'id': o.id, 'score': float(s), 'ontology': ont})
+    results.sort(key=lambda x: x.get('score', 0.0), reverse=True)
+    return results[:k]
+# --- end helpers ---
 import networkx as nx
 from collections import deque
+import requests
+from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
+from django.urls import reverse
 
 
 class OntologyViewSet(viewsets.ModelViewSet):
@@ -100,15 +180,12 @@ def search_graph(request):
         # fallback to aggregated
         return aggregated_graph(request)
 
-    # ensure index is available; schedule background build if missing to avoid blocking
-    try:
-        from .faiss_index import ensure_index
-        ensure_index(background=True)
-    except Exception:
-        # fallback: proceed without blocking
-        pass
+    # Lightweight local semantic search (dependency-free).
+    # We avoid FAISS / HF Space delegation here so Query API is self-contained
+    # and suitable for lightweight Render deployments.
 
-    results = query_top_k(q, k=k)
+    # run lightweight scoring across saved Ontology records
+    results = query_top_k_local(q, k=k)
 
     # merge nodes/relations from results
     node_map = {}
@@ -263,3 +340,104 @@ def search_graph(request):
 
     # return compact matches/snippets rather than full ontology payloads
     return Response({'nodes': list(final_node_map.values()), 'relations': final_relations, 'matches': hit_snippets, 'traversal': {'seeds': list(seed_ids), 'hops': hops}})
+
+
+@api_view(['POST'])
+@csrf_exempt
+def upload_document(request):
+    """Accept file uploads from the frontend, forward them to the
+    external Ontology-Generator HF Space, save returned ontology JSON
+    into the Ontology model, and return the saved record.
+    """
+    # expect multipart form with 'file'
+    f = request.FILES.get('file')
+    if not f:
+        return Response({'detail': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Forward to HF Space Ontology-Generator
+    # Use configured env var if present, otherwise the known HF URL
+    hf_url = getattr(settings, 'HF_ONTOLOGY_GENERATOR_URL', 'https://huggingface.co/spaces/VivanRajath/Ontology-Generator')
+    # try a few candidate endpoints on the space
+    candidates = [
+        hf_url.rstrip('/') + '/generate',
+        hf_url.rstrip('/') + '/api/generate',
+        hf_url.rstrip('/'),
+    ]
+
+    resp_json = None
+    for url in candidates:
+        try:
+            files = {'file': (f.name, f.read())}
+            r = requests.post(url, files=files, timeout=30)
+            if r.status_code == 200:
+                # assume JSON response with ontology
+                try:
+                    resp_json = r.json()
+                except Exception:
+                    # try to interpret plain text
+                    resp_json = {'ontology': r.text}
+                break
+        except Exception:
+            continue
+
+    if not resp_json:
+        return Response({'detail': 'Failed to reach Ontology-Generator space'}, status=status.HTTP_502_BAD_GATEWAY)
+
+    # The HF space may return {ontology: {...}} or the ontology directly
+    ont = resp_json.get('ontology') if isinstance(resp_json, dict) and 'ontology' in resp_json else resp_json
+
+    # persist to DB
+    try:
+        o = Ontology.objects.create(filename=f.name, source='hf_space', json=ont)
+        # attempt to push the newly saved ontology to the remote Query-chat index
+        remote_result = {}
+        try:
+            from .remote_index import ingest as remote_ingest, build_remote
+            # remote expects list of {'id': int, 'ontology': dict}
+            try:
+                ingest_resp = remote_ingest([{'id': o.id, 'ontology': ont}])
+                remote_result['ingest'] = ingest_resp
+            except Exception as e:
+                remote_result['ingest_error'] = str(e)
+            # trigger remote build in background (best-effort)
+            try:
+                import threading
+                def _build():
+                    try:
+                        b = build_remote()
+                        if settings.DEBUG:
+                            print('remote build response:', b)
+                        remote_result['build'] = b
+                    except Exception as e:
+                        remote_result['build_error'] = str(e)
+                t = threading.Thread(target=_build, daemon=True)
+                t.start()
+            except Exception as e:
+                remote_result['build_error'] = str(e)
+        except Exception as e:
+            # remote_index not available or failed import — continue silently
+            remote_result['import_error'] = str(e)
+
+        serializer = OntologySerializer(o)
+        resp = serializer.data
+        # include remote push/build info to aid debugging
+        resp['_remote'] = remote_result
+        return Response(resp, status=status.HTTP_201_CREATED)
+    except Exception as exc:
+        return Response({'detail': 'Failed to save ontology', 'error': str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@csrf_exempt
+def remote_query(request):
+    """Proxy query requests from frontend to the configured remote index.
+
+    Accepts JSON {query: str, k: int}
+    """
+    payload = request.data or {}
+    q = payload.get('query') or payload.get('q') or ''
+    k = int(payload.get('k') or 5)
+    if not q:
+        return Response({'detail': 'Missing query'}, status=status.HTTP_400_BAD_REQUEST)
+    results = query_top_k_local(q, k=k)
+    return Response({'results': results})

@@ -1,0 +1,20 @@
+:root{--bg:#0f1724;--panel:#0b1220;--accent:#7c3aed;--muted:#94a3b8;--card:#0e1622}
+*{box-sizing:border-box}html,body,#app{height:100%;margin:0;font-family:Inter,Segoe UI,Arial;background:linear-gradient(180deg,#071021 0%,#081226 100%);color:#e6eef8}
+.app{display:grid;grid-template-columns:260px 1fr 360px;height:100vh;gap:12px;padding:12px}
+.panel{background:var(--panel);border-radius:8px;display:flex;flex-direction:column;overflow:hidden}
+.panel-header{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.03);font-weight:600}
+.panel-body{padding:12px 16px;overflow:auto}
+.canvas{display:flex;flex-direction:column;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:8px}
+.canvas-header{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.03)}
+.network{flex:1;min-height:0}
+.doc-list{list-style:none;padding:0;margin:8px 0}
+.doc-list li{padding:8px;border-radius:6px;background:rgba(255,255,255,0.02);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+button{background:var(--accent);border:none;color:white;padding:8px 10px;border-radius:6px;cursor:pointer}
+button.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06)}
+textarea{width:100%;padding:8px;border-radius:6px;background:transparent;border:1px solid rgba(255,255,255,0.06);color:inherit}
+.chat-log{height: calc(100% - 120px);overflow:auto;padding:8px;border-radius:6px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent)}
+.chat-log .msg{padding:8px;margin-bottom:8px;border-radius:6px}
+.chat-log .user{background:rgba(124,58,237,0.12);border:1px solid rgba(124,58,237,0.08)}
+.chat-log .bot{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.02)}
+.controls button{margin-left:8px}
+@media (max-width:900px){.app{grid-template-columns:1fr}.panel.right{display:none}}

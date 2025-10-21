@@ -8,6 +8,10 @@ from .faiss_index import query_top_k, build_index
 import os
 import networkx as nx
 from collections import deque
+import requests
+from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
+import threading
 
 
 class OntologyViewSet(viewsets.ModelViewSet):
@@ -265,3 +269,102 @@ def search_graph(request):
 
     # return compact matches/snippets rather than full ontology payloads
     return Response({'nodes': list(final_node_map.values()), 'relations': final_relations, 'matches': hit_snippets, 'traversal': {'seeds': list(seed_ids), 'hops': hops}})
+
+
+
+@api_view(['POST'])
+@csrf_exempt
+def upload_document(request):
+    """Accept file uploads from the frontend, forward them to the
+    external Ontology-Generator HF Space, save returned ontology JSON
+    into the Ontology model, and return the saved record.
+    """
+    f = request.FILES.get('file')
+    if not f:
+        return Response({'detail': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+    hf_url = getattr(settings, 'HF_ONTOLOGY_GENERATOR_URL', 'https://huggingface.co/spaces/VivanRajath/Ontology-Generator')
+    candidates = [
+        hf_url.rstrip('/') + '/generate',
+        hf_url.rstrip('/') + '/api/generate',
+        hf_url.rstrip('/'),
+    ]
+
+    resp_json = None
+    for url in candidates:
+        try:
+            files = {'file': (f.name, f.read())}
+            r = requests.post(url, files=files, timeout=30)
+            if r.status_code == 200:
+                try:
+                    resp_json = r.json()
+                except Exception:
+                    resp_json = {'ontology': r.text}
+                break
+        except Exception:
+            continue
+
+    if not resp_json:
+        return Response({'detail': 'Failed to reach Ontology-Generator space'}, status=status.HTTP_502_BAD_GATEWAY)
+
+    ont = resp_json.get('ontology') if isinstance(resp_json, dict) and 'ontology' in resp_json else resp_json
+
+    try:
+        o = Ontology.objects.create(filename=f.name, source='hf_space', json=ont)
+        remote_result = {}
+        # attempt to push the newly saved ontology to the remote Query-chat index
+        remote_result = {}
+        try:
+            try:
+                from .remote_index import ingest as remote_ingest, build_remote
+            except Exception:
+                try:
+                    from .remote_index import ingest as remote_ingest, build_remote
+                except Exception:
+                    remote_ingest = None
+                    build_remote = None
+
+            if remote_ingest:
+                try:
+                    ingest_resp = remote_ingest([{'id': o.id, 'ontology': ont}])
+                    remote_result['ingest'] = ingest_resp
+                except Exception as e:
+                    remote_result['ingest_error'] = str(e)
+
+            if build_remote:
+                def _build():
+                    try:
+                        b = build_remote()
+                        if settings.DEBUG:
+                            print('remote build response:', b)
+                        remote_result['build'] = b
+                    except Exception as e:
+                        remote_result['build_error'] = str(e)
+                t = threading.Thread(target=_build, daemon=True)
+                t.start()
+        except Exception as e:
+            # swallow any errors communicating with remote index helper
+            remote_result['remote_error'] = str(e)
+
+        serializer = OntologySerializer(o)
+        resp = serializer.data
+        resp['_remote'] = remote_result
+        return Response(resp, status=status.HTTP_201_CREATED)
+    except Exception as exc:
+        return Response({'detail': 'Failed to save ontology', 'error': str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@csrf_exempt
+def remote_query(request):
+    """Proxy query requests from frontend to the configured remote index.
+
+    Accepts JSON {query: str, k: int}
+    """
+    payload = request.data or {}
+    q = payload.get('query') or payload.get('q') or ''
+    k = int(payload.get('k') or 5)
+    if not q:
+        return Response({'detail': 'Missing query'}, status=status.HTTP_400_BAD_REQUEST)
+    results = query_top_k(q, k=k)
+    return Response({'results': results})
