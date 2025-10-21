@@ -238,16 +238,58 @@
           status.textContent = "✅ Ontology generated";
           output.textContent = JSON.stringify(ontology, null, 2);
 
-          // Refresh aggregated graph from local backend (if available)
+          // Try to persist the generated ontology to the local backend so it
+          // will be included in the aggregated graph and survive a page reload.
+          // If the HF-space response already came from our backend it will
+          // usually include an `id` field; in that case skip the duplicate save.
           try {
-            const agg = await fetch(LOCAL_GRAPH);
-            if (agg.ok) {
-              const graphData = await agg.json();
-              drawGraph(graphData.nodes || [], graphData.relations || []);
-              return;
+            const alreadySaved = data && (data.id || data.pk || (data.json && data.id));
+            if (!alreadySaved) {
+              try {
+                const savePayload = { filename: file.name || 'uploaded', source: 'hf_space', ontology: ontology };
+                const saveResp = await fetch(LOCAL_STORE, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(savePayload),
+                });
+                if (saveResp.ok) {
+                  const saved = await saveResp.json();
+                  status.textContent = '✅ Ontology generated and saved locally';
+                  // refresh saved list and aggregated graph
+                  try { fetchSavedList(); } catch (e) { /* ignore */ }
+                  try {
+                    const agg = await fetch(LOCAL_GRAPH);
+                    if (agg.ok) {
+                      const graphData = await agg.json();
+                      drawGraph(graphData.nodes || [], graphData.relations || []);
+                      return;
+                    }
+                  } catch (err) {
+                    // ignore and fall back to drawing just this ontology
+                  }
+                } else {
+                  console.warn('Local save failed', saveResp.status);
+                  status.textContent = '✅ Ontology generated (not saved locally)';
+                }
+              } catch (e) {
+                console.warn('Failed to save ontology locally', e);
+                status.textContent = '✅ Ontology generated (local save failed)';
+              }
+            } else {
+              // already saved by backend — try to refresh aggregated graph
+              try {
+                const agg = await fetch(LOCAL_GRAPH);
+                if (agg.ok) {
+                  const graphData = await agg.json();
+                  drawGraph(graphData.nodes || [], graphData.relations || []);
+                  return;
+                }
+              } catch (err) {
+                // fallback below
+              }
             }
           } catch (err) {
-            // if local backend not available, fall back to drawing current ontology only
+            console.warn('Persistence attempt failed', err);
           }
 
           let nodes = ontology.nodes;
