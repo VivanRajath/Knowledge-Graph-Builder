@@ -3,90 +3,275 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Space-themed ontology explorer — upload PDFs, generate ontologies, and explore knowledge graphs." />
-  <meta name="theme-color" content="#0b0f1a" />
+    <meta
+      name="description"
+      content="Space-themed ontology explorer — upload PDFs, generate ontologies, and explore knowledge graphs."
+    />
+    <meta name="theme-color" content="#0b0f1a" />
     <title>Ontology Graph — Space Vault</title>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
     <style>
-      :root{
-        --bg:#0b0f1a;
-        --panel:#0f1724cc; /* translucent panel */
-        --muted:#9aa4bf;
-        --accent:#8ab4ff;
-        --glass: rgba(255,255,255,0.04);
-        --glass-strong: rgba(255,255,255,0.06);
+      :root {
+        --bg: #0b0f1a;
+        --panel: #0f1724cc; /* translucent panel */
+        --muted: #9aa4bf;
+        --accent: #8ab4ff;
+        --glass: rgba(255, 255, 255, 0.04);
+        --glass-strong: rgba(255, 255, 255, 0.06);
       }
 
       /* Reset */
-      *{box-sizing:border-box}
-      html,body{height:100%;}
-      body{
-        margin:0;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
-        background: radial-gradient(1200px 800px at 10% 10%, rgba(58,66,97,0.12), transparent),
-                    radial-gradient(900px 600px at 90% 80%, rgba(120,60,160,0.08), transparent),
-                    var(--bg);
-        color:#e6eef8;
-        -webkit-font-smoothing:antialiased;
-        -moz-osx-font-smoothing:grayscale;
-        overflow:hidden;
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial;
+        background: radial-gradient(
+            1200px 800px at 10% 10%,
+            rgba(58, 66, 97, 0.12),
+            transparent
+          ),
+          radial-gradient(
+            900px 600px at 90% 80%,
+            rgba(120, 60, 160, 0.08),
+            transparent
+          ),
+          var(--bg);
+        color: #e6eef8;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        overflow: hidden;
       }
 
       /* Starfield */
-      .starfield{
-        position:fixed;inset:0;pointer-events:none;z-index:0;background-image:radial-gradient(rgba(255,255,255,0.9) 1px, transparent 1px), radial-gradient(rgba(255,255,255,0.6) 1px, transparent 1px);
+      .starfield {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+        background-image: radial-gradient(
+            rgba(255, 255, 255, 0.9) 1px,
+            transparent 1px
+          ),
+          radial-gradient(rgba(255, 255, 255, 0.6) 1px, transparent 1px);
         background-size: 300px 300px, 100px 100px;
-        opacity:0.14;mix-blend-mode:screen;
+        opacity: 0.14;
+        mix-blend-mode: screen;
       }
 
       /* Layout */
-      .app{
-        position:relative;display:grid;grid-template-columns:260px 1fr 360px;grid-template-rows:56px 1fr;gap:18px;height:100vh;padding:20px;z-index:1;
+      .app {
+        position: relative;
+        display: grid;
+        grid-template-columns: 260px 1fr 360px;
+        grid-template-rows: 56px 1fr;
+        gap: 18px;
+        height: 100vh;
+        padding: 20px;
+        z-index: 1;
       }
 
-  .topbar{grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:8px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));backdrop-filter: blur(6px);box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+      .topbar {
+        grid-column: 1/-1;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.02),
+          rgba(255, 255, 255, 0.01)
+        );
+        backdrop-filter: blur(6px);
+        box-shadow: 0 6px 18px rgba(2, 6, 23, 0.6);
+      }
 
-  .brand{display:flex;align-items:center;gap:10px}
-  .logo{width:30px;height:30px;border-radius:6px;background:linear-gradient(135deg,#9a67ff,#3ab3ff);display:flex;align-items:center;justify-content:center;font-weight:800;color:#031025;font-size:0.9rem}
-  .title{font-weight:700;font-size:0.98rem}
-  .subtitle{color:var(--muted);font-size:0.78rem}
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .logo {
+        width: 30px;
+        height: 30px;
+        border-radius: 6px;
+        background: linear-gradient(135deg, #9a67ff, #3ab3ff);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        color: #031025;
+        font-size: 0.9rem;
+      }
+      .title {
+        font-weight: 700;
+        font-size: 0.98rem;
+      }
+      .subtitle {
+        color: var(--muted);
+        font-size: 0.78rem;
+      }
 
       /* Panels */
-  .panel{background:var(--panel);border-radius:10px;padding:10px;color:var(--muted);box-shadow:0 8px 24px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03);overflow:hidden}
+      .panel {
+        background: var(--panel);
+        border-radius: 10px;
+        padding: 10px;
+        color: var(--muted);
+        box-shadow: 0 8px 24px rgba(2, 6, 23, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        overflow: hidden;
+      }
 
-      .sidebar{grid-row:2;}
-      .center{grid-row:2;display:flex;flex-direction:column}
-      .right{grid-row:2}
+      .sidebar {
+        grid-row: 2;
+      }
+      .center {
+        grid-row: 2;
+        display: flex;
+        flex-direction: column;
+      }
+      .right {
+        grid-row: 2;
+      }
 
       /* Sidebar content */
-  .controls{display:flex;flex-direction:column;gap:8px}
-      .file-input{display:flex;gap:8px;align-items:center}
-  input[type=file]{background:var(--glass);color:var(--muted);padding:6px;border-radius:6px;border:1px dashed rgba(255,255,255,0.03);width:100%}
-  .btn{background:linear-gradient(180deg,var(--accent),#5f9bff);color:#021025;padding:6px 8px;border-radius:6px;border:none;font-weight:700;cursor:pointer;font-size:0.88rem}
-  .status{font-size:0.82rem;color:var(--muted);min-height:20px}
+      .controls {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .file-input {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      input[type="file"] {
+        background: var(--glass);
+        color: var(--muted);
+        padding: 6px;
+        border-radius: 6px;
+        border: 1px dashed rgba(255, 255, 255, 0.03);
+        width: 100%;
+      }
+      .btn {
+        background: linear-gradient(180deg, var(--accent), #5f9bff);
+        color: #021025;
+        padding: 6px 8px;
+        border-radius: 6px;
+        border: none;
+        font-weight: 700;
+        cursor: pointer;
+        font-size: 0.88rem;
+      }
+      .status {
+        font-size: 0.82rem;
+        color: var(--muted);
+        min-height: 20px;
+      }
 
       /* Graph area */
-  #graphContainer{flex:1;margin-top:6px;position:relative;border-radius:8px;overflow:hidden}
-      #graph{position:absolute;inset:0}
+      #graphContainer {
+        flex: 1;
+        margin-top: 6px;
+        position: relative;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      #graph {
+        position: absolute;
+        inset: 0;
+      }
 
       /* Right panel */
-  .panel h3{color:#e6eef8;margin:4px 0 8px;font-size:0.95rem}
-  pre#output{background:transparent;color:var(--muted);white-space:pre-wrap;word-break:break-word;border-radius:6px;padding:6px;max-height:320px;overflow:auto;font-size:0.85rem}
+      .panel h3 {
+        color: #e6eef8;
+        margin: 4px 0 8px;
+        font-size: 0.95rem;
+      }
+      pre#output {
+        background: transparent;
+        color: var(--muted);
+        white-space: pre-wrap;
+        word-break: break-word;
+        border-radius: 6px;
+        padding: 6px;
+        max-height: 320px;
+        overflow: auto;
+        font-size: 0.85rem;
+      }
 
       /* Small helpers */
-  .help{font-size:0.8rem;color:var(--muted)}
-  .node-legend{display:flex;flex-wrap:wrap;gap:6px}
-  .legend-chip{padding:5px 8px;border-radius:999px;background:rgba(255,255,255,0.03);font-size:0.82rem;color:var(--muted)}
+      .help {
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+      .node-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .legend-chip {
+        padding: 5px 8px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.03);
+        font-size: 0.82rem;
+        color: var(--muted);
+      }
 
       /* Responsive */
-      @media (max-width:1000px){
-  .app{grid-template-columns:72px 1fr;grid-template-rows:56px 1fr 260px}
-        .right{grid-column:1/-1;grid-row:3}
-        .sidebar{grid-row:2}
+      @media (max-width: 1000px) {
+        .app {
+          grid-template-columns: 72px 1fr;
+          grid-template-rows: 56px 1fr 260px;
+        }
+        .right {
+          grid-column: 1/-1;
+          grid-row: 3;
+        }
+        .sidebar {
+          grid-row: 2;
+        }
+      }
+      /* SVG glow for highlighted nodes */
+      .node-glow {
+        /* fallback filter; primary glow is the SVG filter defined below */
+        filter: drop-shadow(0 0 8px rgba(255,118,117,0.9));
+        transform-origin: center center;
+        animation: pulse 1.4s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.06); }
+        100% { transform: scale(1); }
       }
     </style>
   </head>
   <body>
+    <!-- SVG defs used for glow effect -->
+    <svg width="0" height="0" style="position:absolute">
+      <defs>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3.5" result="coloredBlur" />
+          <feMerge>
+            <feMergeNode in="coloredBlur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+    </svg>
     <div class="starfield" aria-hidden="true"></div>
     <div class="app">
       <div class="topbar panel">
@@ -95,47 +280,182 @@
         </div>
         <div>
           <div class="title">Space Vault — Ontology Explorer</div>
-          <div class="subtitle">Upload PDFs, generate ontologies and explore relationships</div>
+          <div class="subtitle">
+            Upload PDFs, generate ontologies and explore relationships
+          </div>
         </div>
-        <div style="margin-left:auto;text-align:right;display:flex;align-items:center;gap:12px">
+        <div
+          style="
+            margin-left: auto;
+            text-align: right;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+          "
+        >
           <div class="help">Obsidian-like UI • Space theme</div>
-          <div id="backendStatus" style="display:flex;align-items:center;gap:8px">
-            <span id="backendDot" style="width:10px;height:10px;border-radius:50%;background:#ff6b6b;display:inline-block"></span>
-            <span id="backendText" style="font-size:0.85rem;color:var(--muted)">Local backend: unknown</span>
+          <div
+            id="backendStatus"
+            style="display: flex; align-items: center; gap: 8px"
+          >
+            <span
+              id="backendDot"
+              style="
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                background: #ff6b6b;
+                display: inline-block;
+              "
+            ></span>
+            <span
+              id="backendText"
+              style="font-size: 0.85rem; color: var(--muted)"
+              >Local backend: unknown</span
+            >
           </div>
         </div>
       </div>
 
       <aside class="sidebar panel">
-        <h3 style="color:#e6eef8;margin-top:0">File & Actions</h3>
+        <h3 style="color: #e6eef8; margin-top: 0">File & Actions</h3>
         <div class="controls">
           <form id="uploadForm">
             <div class="file-input">
               <input type="file" id="fileInput" accept=".pdf" required />
             </div>
-            <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+            <div
+              style="
+                display: flex;
+                gap: 8px;
+                margin-top: 8px;
+                align-items: center;
+              "
+            >
               <button class="btn" type="submit">Generate Graph</button>
-              <button id="clearBtn" class="btn" type="button" style="background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.03)">Clear</button>
-              <button id="loadSavedBtn" class="btn" type="button" style="background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.03)">Load Saved Graph</button>
-              <button id="refreshGraphBtn" class="btn" type="button" style="background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.03)">Refresh Graph</button>
-              <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
-                <input id="searchInput" placeholder="Search nodes" style="padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:#e6eef8;width:180px" />
-                <button id="zoomInBtn" class="btn" title="Zoom in" style="width:36px;height:36px;padding:6px">+</button>
-                <button id="zoomOutBtn" class="btn" title="Zoom out" style="width:36px;height:36px;padding:6px">−</button>
-                <button id="resetZoomBtn" class="btn" title="Reset" style="width:36px;height:36px;padding:6px">⟳</button>
+              <button
+                id="clearBtn"
+                class="btn"
+                type="button"
+                style="
+                  background: transparent;
+                  color: var(--muted);
+                  border: 1px solid rgba(255, 255, 255, 0.03);
+                "
+              >
+                Clear
+              </button>
+              <button
+                id="loadSavedBtn"
+                class="btn"
+                type="button"
+                style="
+                  background: transparent;
+                  color: var(--muted);
+                  border: 1px solid rgba(255, 255, 255, 0.03);
+                "
+              >
+                Load Saved Graph
+              </button>
+              <button
+                id="refreshGraphBtn"
+                class="btn"
+                type="button"
+                style="
+                  background: transparent;
+                  color: var(--muted);
+                  border: 1px solid rgba(255, 255, 255, 0.03);
+                "
+              >
+                Refresh Graph
+              </button>
+              <div
+                style="
+                  margin-left: auto;
+                  display: flex;
+                  gap: 6px;
+                  align-items: center;
+                "
+              >
+                <input
+                  id="searchInput"
+                  placeholder="Search nodes"
+                  style="
+                    padding: 8px;
+                    border-radius: 8px;
+                    border: 1px solid rgba(255, 255, 255, 0.03);
+                    background: transparent;
+                    color: #e6eef8;
+                    width: 180px;
+                  "
+                />
+                <button
+                  id="zoomInBtn"
+                  class="btn"
+                  title="Zoom in"
+                  style="width: 36px; height: 36px; padding: 6px"
+                >
+                  +
+                </button>
+                <button
+                  id="zoomOutBtn"
+                  class="btn"
+                  title="Zoom out"
+                  style="width: 36px; height: 36px; padding: 6px"
+                >
+                  −
+                </button>
+                <button
+                  id="resetZoomBtn"
+                  class="btn"
+                  title="Reset"
+                  style="width: 36px; height: 36px; padding: 6px"
+                >
+                  ⟳
+                </button>
               </div>
             </div>
           </form>
 
-          <div class="status" id="status" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+          <div
+            class="status"
+            id="status"
+            style="
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            "
+          ></div>
 
-          <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:10px 0">
+          <hr
+            style="
+              border: none;
+              border-top: 1px solid rgba(255, 255, 255, 0.03);
+              margin: 10px 0;
+            "
+          />
           <div class="help">Legend</div>
           <div class="node-legend" id="legend"></div>
-          <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:10px 12px">
-          <div style="margin-top:8px;">
+          <hr
+            style="
+              border: none;
+              border-top: 1px solid rgba(255, 255, 255, 0.03);
+              margin: 10px 12px;
+            "
+          />
+          <div style="margin-top: 8px">
             <div class="help">Saved uploads</div>
-            <div id="savedList" style="margin-top:8px;display:flex;flex-direction:column;gap:6px;max-height:260px;overflow:auto"></div>
+            <div
+              id="savedList"
+              style="
+                margin-top: 8px;
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+                max-height: 260px;
+                overflow: auto;
+              "
+            ></div>
           </div>
         </div>
       </aside>
@@ -148,30 +468,105 @@
 
       <aside class="right panel">
         <h3>Query & Chat</h3>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <div id="chatLog" style="height:220px;overflow:auto;padding:8px;border-radius:6px;background:rgba(0,0,0,0.04)"></div>
-          <textarea id="queryInput" placeholder="Ask about the graph or uploaded docs..." rows="3" style="width:100%;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:#e6eef8"></textarea>
-          <div style="display:flex;gap:8px;align-items:center">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div
+            id="chatLog"
+            style="
+              height: 220px;
+              overflow: auto;
+              padding: 8px;
+              border-radius: 6px;
+              background: rgba(0, 0, 0, 0.04);
+            "
+          ></div>
+          <textarea
+            id="queryInput"
+            placeholder="Ask about the graph or uploaded docs..."
+            rows="3"
+            style="
+              width: 100%;
+              padding: 8px;
+              border-radius: 6px;
+              border: 1px solid rgba(255, 255, 255, 0.03);
+              background: transparent;
+              color: #e6eef8;
+            "
+          ></textarea>
+          <div style="display: flex; gap: 8px; align-items: center">
             <button id="sendQueryBtn" class="btn">Send</button>
-            <button id="clearChatBtn" class="btn" style="background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.03)">Clear</button>
-            <button id="saveHitsBtn" class="btn" style="background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.03);margin-left:auto">Save Hits</button>
+            <button
+              id="clearChatBtn"
+              class="btn"
+              style="
+                background: transparent;
+                color: var(--muted);
+                border: 1px solid rgba(255, 255, 255, 0.03);
+              "
+            >
+              Clear
+            </button>
+            <button
+              id="saveHitsBtn"
+              class="btn"
+              style="
+                background: transparent;
+                color: var(--muted);
+                border: 1px solid rgba(255, 255, 255, 0.03);
+                margin-left: auto;
+              "
+            >
+              Save Hits
+            </button>
           </div>
-          <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:6px 0">
-          <div id="matches" style="max-height:240px;overflow:auto;display:flex;flex-direction:column;gap:8px"></div>
-          <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:6px 0">
-          <h3 style="margin-top:6px">Raw JSON</h3>
+          <hr
+            style="
+              border: none;
+              border-top: 1px solid rgba(255, 255, 255, 0.03);
+              margin: 6px 0;
+            "
+          />
+          <div
+            id="matches"
+            style="
+              max-height: 240px;
+              overflow: auto;
+              display: flex;
+              flex-direction: column;
+              gap: 8px;
+            "
+          ></div>
+          <hr
+            style="
+              border: none;
+              border-top: 1px solid rgba(255, 255, 255, 0.03);
+              margin: 6px 0;
+            "
+          />
+          <h3 style="margin-top: 6px">Raw JSON</h3>
           <pre id="output">No output yet.</pre>
         </div>
       </aside>
     </div>
 
-    <div id="tooltip" style="position:fixed;pointer-events:none;padding:6px 8px;background:rgba(0,0,0,0.7);color:#fff;border-radius:6px;font-size:12px;display:none;z-index:1000"></div>
+    <div
+      id="tooltip"
+      style="
+        position: fixed;
+        pointer-events: none;
+        padding: 6px 8px;
+        background: rgba(0, 0, 0, 0.7);
+        color: #fff;
+        border-radius: 6px;
+        font-size: 12px;
+        display: none;
+        z-index: 1000;
+      "
+    ></div>
 
     <!-- D3.js for graph visualization -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
 
     <script>
-      // Selectors (updated for new layout)
       const form = document.getElementById("uploadForm");
       const fileInput = document.getElementById("fileInput");
       const status = document.getElementById("status");
@@ -180,13 +575,11 @@
       const legendDiv = document.getElementById("legend");
       const clearBtn = document.getElementById("clearBtn");
 
-    const API_URL = "https://vivanrajath-ontology-generator.hf.space/upload-pdf"; // HF Spaces hosted generator URL (remote)
-
-  // Local persistence backend (served by Django on the same origin when running manage.py runserver)
-  // Use trailing slashes to match Django router (avoid 301 redirects)
-  const LOCAL_STORE = "/api/ontologies/";
-  const LOCAL_GRAPH = "/api/graph/";
-  const LOCAL_UPLOAD = "/api/upload/";
+      const API_URL =
+        "https://vivanrajath-ontology-generator.hf.space/upload-pdf";
+      const LOCAL_STORE = "/api/ontologies/";
+      const LOCAL_GRAPH = "/api/graph/";
+      const LOCAL_UPLOAD = "/api/upload-pdf/";
 
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -206,30 +599,35 @@
         legendDiv.innerHTML = "";
 
         try {
-          // Prefer uploading to the local backend proxy which will forward to the HF space and persist
-          // If the local proxy is unavailable, fall back to calling the HF space directly.
           let data = null;
-          try{
-            const resLocal = await fetch(LOCAL_UPLOAD, { method: 'POST', body: formData });
-            if(resLocal.ok){
-              data = await resLocal.json();
-            } else {
-              console.warn('Local upload proxy failed, status=', resLocal.status);
+          try {
+            const resLocal = await fetch(LOCAL_UPLOAD, {
+              method: "POST",
+              body: formData,
+            });
+            if (resLocal.ok) data = await resLocal.json();
+            else console.warn("Local upload proxy failed:", resLocal.status);
+          } catch (e) {
+            console.warn("Local upload attempt failed", e);
+          }
+
+          if (!data) {
+            const res = await fetch(API_URL, {
+              method: "POST",
+              body: formData,
+            });
+            try {
+              data = await res.json();
+            } catch {
+              data = { ontology: null };
             }
-          }catch(e){
-            console.warn('Local upload attempt failed', e);
           }
 
-          // fallback to upstream HF space if local proxy didn't return a usable response
-          if(!data){
-            const res = await fetch(API_URL, { method: "POST", body: formData });
-            try{ data = await res.json(); }catch(e){ data = { ontology: null } }
-          }
-
-          // normalize ontology payload which may come as {ontology: {...}} or as serializer data with `json` field
-          const ontology = (data && (data.ontology || data.json)) ? (data.ontology || data.json) : (data || {});
-
-          if(!ontology || (Object.keys(ontology).length===0)){
+          const ontology =
+            data && (data.ontology || data.json)
+              ? data.ontology || data.json
+              : data || {};
+          if (!ontology || Object.keys(ontology).length === 0) {
             status.textContent = "❌ Error generating ontology.";
             output.textContent = JSON.stringify(data, null, 2);
             return;
@@ -238,70 +636,56 @@
           status.textContent = "✅ Ontology generated";
           output.textContent = JSON.stringify(ontology, null, 2);
 
-          // Try to persist the generated ontology to the local backend so it
-          // will be included in the aggregated graph and survive a page reload.
-          // If the HF-space response already came from our backend it will
-          // usually include an `id` field; in that case skip the duplicate save.
           try {
-            const alreadySaved = data && (data.id || data.pk || (data.json && data.id));
+            const alreadySaved =
+              data && (data.id || data.pk || (data.json && data.id));
             if (!alreadySaved) {
-              try {
-                const savePayload = { filename: file.name || 'uploaded', source: 'hf_space', ontology: ontology };
-                const saveResp = await fetch(LOCAL_STORE, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(savePayload),
-                });
-                if (saveResp.ok) {
-                  const saved = await saveResp.json();
-                  status.textContent = '✅ Ontology generated and saved locally';
-                  // refresh saved list and aggregated graph
-                  try { fetchSavedList(); } catch (e) { /* ignore */ }
-                  try {
-                    const agg = await fetch(LOCAL_GRAPH);
-                    if (agg.ok) {
-                      const graphData = await agg.json();
-                      drawGraph(graphData.nodes || [], graphData.relations || []);
-                      return;
-                    }
-                  } catch (err) {
-                    // ignore and fall back to drawing just this ontology
-                  }
-                } else {
-                  console.warn('Local save failed', saveResp.status);
-                  status.textContent = '✅ Ontology generated (not saved locally)';
-                }
-              } catch (e) {
-                console.warn('Failed to save ontology locally', e);
-                status.textContent = '✅ Ontology generated (local save failed)';
-              }
-            } else {
-              // already saved by backend — try to refresh aggregated graph
-              try {
+              const savePayload = {
+                filename: file.name || "uploaded",
+                source: "hf_space",
+                ontology: ontology,
+              };
+              const saveResp = await fetch(LOCAL_STORE, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(savePayload),
+              });
+              if (saveResp.ok) {
+                const saved = await saveResp.json();
+                status.textContent = "✅ Ontology generated and saved locally";
+                fetchSavedList();
                 const agg = await fetch(LOCAL_GRAPH);
                 if (agg.ok) {
                   const graphData = await agg.json();
                   drawGraph(graphData.nodes || [], graphData.relations || []);
                   return;
                 }
-              } catch (err) {
-                // fallback below
+              } else {
+                console.warn("Local save failed", saveResp.status);
+                status.textContent =
+                  "✅ Ontology generated (not saved locally)";
+              }
+            } else {
+              const agg = await fetch(LOCAL_GRAPH);
+              if (agg.ok) {
+                const graphData = await agg.json();
+                drawGraph(graphData.nodes || [], graphData.relations || []);
+                return;
               }
             }
           } catch (err) {
-            console.warn('Persistence attempt failed', err);
+            console.warn("Persistence attempt failed", err);
           }
 
           let nodes = ontology.nodes;
           let relations = ontology.relations;
 
-          if ((!nodes || !relations) && data.ontology.entities) {
+          if ((!nodes || !relations) && data.ontology?.entities) {
             nodes = data.ontology.entities.map((ent) => ({
               id: ent.id || ent.text,
               label: ent.id || ent.text,
               type: ent.class || ent.label || "Entity",
             }));
-
             relations =
               data.ontology.relations?.map((rel) => ({
                 source: rel.source,
@@ -328,400 +712,372 @@
         }
       });
 
-      clearBtn.addEventListener('click', ()=>{
-        graphDiv.innerHTML = '';
-        output.textContent = 'Cleared.';
-        status.textContent = '';
-        legendDiv.innerHTML = '';
-      })
+      clearBtn.addEventListener("click", () => {
+        graphDiv.innerHTML = "";
+        output.textContent = "Cleared.";
+        status.textContent = "";
+        legendDiv.innerHTML = "";
+      });
 
-      // Chat / Query UI wiring
-      const chatLog = document.getElementById('chatLog');
-      const queryInput = document.getElementById('queryInput');
-      const sendQueryBtn = document.getElementById('sendQueryBtn');
-      const clearChatBtn = document.getElementById('clearChatBtn');
-      const saveHitsBtn = document.getElementById('saveHitsBtn');
-      const matchesDiv = document.getElementById('matches');
+      const savedListDiv = document.getElementById("savedList");
+      const loadSavedBtn = document.getElementById("loadSavedBtn");
+      const searchInput = document.getElementById("searchInput");
+      const zoomInBtn = document.getElementById("zoomInBtn");
+      const zoomOutBtn = document.getElementById("zoomOutBtn");
+      const resetZoomBtn = document.getElementById("resetZoomBtn");
+      const tooltip = document.getElementById("tooltip");
+      const detailsDiv = document.getElementById("details");
+      const backendDot = document.getElementById("backendDot");
+      const backendText = document.getElementById("backendText");
 
-      function appendChat(cls, html){
-        const d = document.createElement('div'); d.className = 'msg '+cls; d.innerHTML = html;
-        chatLog.appendChild(d); chatLog.scrollTop = chatLog.scrollHeight;
-      }
-
-      // Helper: try candidate HF Space endpoints and return parsed JSON on success
-      async function queryHFSpace(q, k){
-        const user = 'VivanRajath';
-        const name = 'Query-chat';
-        const candidates = [
-          // common hf.space host patterns
-          `https://${name}-${user}.hf.space`,
-          `https://${user}--${name}.hf.space`,
-          `https://${user}-${name}.hf.space`,
-          // public spaces page (some deployments accept API calls here)
-          `https://huggingface.co/spaces/${user}/${name}`
-        ];
-
-        for(const base of candidates){
-          try{
-            const url = `${base.replace(/\/$/, '')}/query`;
-            const res = await fetch(url, {method:'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({q:q, k:k})});
-            if(res.ok){
-              try{ const body = await res.json(); return {ok:true, base, body}; } catch(e){ return {ok:true, base, body: null}; }
-            }
-          }catch(e){
-            // try next candidate
-            continue;
-          }
-        }
-        return {ok:false};
-      }
-
-      sendQueryBtn.addEventListener('click', async ()=>{
-        const q = queryInput.value.trim(); if(!q) return;
-        appendChat('user', `<strong>You:</strong> ${escapeHtml(q)}`);
-        queryInput.value = '';
-        status.textContent = '⏳ Querying HF space...';
-
-        try{
-          // First try the server-side proxy which avoids CORS and ensures the remote
-          // index is queried from the backend. Fall back to HF-space direct calls if needed.
-          try{
-            const proxy = await fetch('/api/query/', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({query: q, k:8})});
-            if(proxy.ok){
-              const proxyBody = await proxy.json();
-              const payload = proxyBody.results || proxyBody || [];
-              // normalize payload to array of hits [{id,score,ontology}]
-            // Expect payload to be an array of {id, score, ontology}
-            // Convert to the same shape as /api/search_graph response where possible
-              const matches = Array.isArray(payload) ? payload.map(it=>({id: it.id, score: it.score, matched_ids: [], snippet: {'nodes': (it.ontology&&it.ontology.nodes)||[], 'relations': (it.ontology&&it.ontology.relations)||[]}})) : [];
-            // Build merged node/relation lists for drawing (flatten snippets)
-            let mergedNodes = [];
-            let mergedRels = [];
-            matches.forEach(m=>{
-              if(m.snippet && m.snippet.nodes) mergedNodes = mergedNodes.concat(m.snippet.nodes);
-              if(m.snippet && m.snippet.relations) mergedRels = mergedRels.concat(m.snippet.relations);
-            });
-            if(mergedNodes.length>0 || mergedRels.length>0){
-              drawGraph(mergedNodes, mergedRels);
-            }
-            // render matches
-            matchesDiv.innerHTML = '';
-            if(matches.length===0) appendChat('bot', 'No semantic matches found.');
-            matches.forEach(m=>{
-              const card = document.createElement('div');
-              card.style.padding = '8px'; card.style.borderRadius='6px'; card.style.background='rgba(255,255,255,0.02)';
-              card.innerHTML = `<div style="font-weight:700;color:#e6eef8">Doc: ${escapeHtml(String(m.id||'unknown'))} — score: ${m.score}</div>`;
-              if(m.matched_ids && m.matched_ids.length>0){
-                const ids = document.createElement('div'); ids.style.color='var(--muted)'; ids.style.marginTop='6px'; ids.textContent = 'Matched IDs: ' + m.matched_ids.join(', ');
-                card.appendChild(ids);
-              }
-              if(m.snippet && (m.snippet.nodes||[]).length>0){
-                const showBtn = document.createElement('button'); showBtn.className='btn'; showBtn.textContent='Show Snippet'; showBtn.style.marginTop='8px';
-                showBtn.addEventListener('click', ()=>{ drawGraph(m.snippet.nodes || [], m.snippet.relations || []); })
-                card.appendChild(showBtn);
-              }
-              matchesDiv.appendChild(card);
-            });
-            appendChat('bot', `Found ${matches.length} matches via server proxy — graph updated.`);
-            status.textContent = '';
-            return;
-          }
-        }catch(proxyErr){
-          console.warn('Proxy query failed', proxyErr);
-          // fallback to trying HF space endpoints directly
-          const tryHF = await queryHFSpace(q, 8);
-          if(tryHF.ok){
-            const payload = tryHF.body || [];
-            const matches = Array.isArray(payload) ? payload.map(it=>({id: it.id, score: it.score, matched_ids: [], snippet: {'nodes': (it.ontology&&it.ontology.nodes)||[], 'relations': (it.ontology&&it.ontology.relations)||[]}})) : [];
-            let mergedNodes = [];
-            let mergedRels = [];
-            matches.forEach(m=>{
-              if(m.snippet && m.snippet.nodes) mergedNodes = mergedNodes.concat(m.snippet.nodes);
-              if(m.snippet && m.snippet.relations) mergedRels = mergedRels.concat(m.snippet.relations);
-            });
-            if(mergedNodes.length>0 || mergedRels.length>0){ drawGraph(mergedNodes, mergedRels); }
-            matchesDiv.innerHTML = '';
-            if(matches.length===0) appendChat('bot', 'No semantic matches found.');
-            matches.forEach(m=>{
-              const card = document.createElement('div'); card.style.padding = '8px'; card.style.borderRadius='6px'; card.style.background='rgba(255,255,255,0.02)';
-              card.innerHTML = `<div style="font-weight:700;color:#e6eef8">Doc: ${escapeHtml(String(m.id||'unknown'))} — score: ${m.score}</div>`;
-              if(m.matched_ids && m.matched_ids.length>0){ const ids = document.createElement('div'); ids.style.color='var(--muted)'; ids.style.marginTop='6px'; ids.textContent = 'Matched IDs: ' + m.matched_ids.join(', '); card.appendChild(ids); }
-              if(m.snippet && (m.snippet.nodes||[]).length>0){ const showBtn = document.createElement('button'); showBtn.className='btn'; showBtn.textContent='Show Snippet'; showBtn.style.marginTop='8px'; showBtn.addEventListener('click', ()=>{ drawGraph(m.snippet.nodes || [], m.snippet.relations || []); }); card.appendChild(showBtn); }
-              matchesDiv.appendChild(card);
-            });
-            appendChat('bot', `Found ${matches.length} matches via HF space (${tryHF.base}) — graph updated.`);
-            status.textContent = '';
-            return;
-          }
-          appendChat('bot', 'Query failed: proxy and HF space both unreachable');
-        }
-
-        }catch(err){
-          console.error(err);
-          appendChat('bot', 'Query error: ' + escapeHtml(String(err.message || err)));
-        } finally{ status.textContent = ''; }
-      })
-
-      clearChatBtn.addEventListener('click', ()=>{ chatLog.innerHTML=''; matchesDiv.innerHTML=''; })
-
-      // Save hits button: download compact matches as JSON for now
-      saveHitsBtn.addEventListener('click', ()=>{
-        try{
-          const nodes = [];
-          const cards = Array.from(matchesDiv.children);
-          const collected = cards.map(c=>({html: c.innerHTML}));
-          const blob = new Blob([JSON.stringify(collected, null, 2)], {type:'application/json'});
-          const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download='matches.json'; a.click(); URL.revokeObjectURL(url);
-        }catch(e){ console.warn(e); }
-      })
-
-      function escapeHtml(str){ return (''+str).replace(/[&"'<>]/g, function(m){return {'&':'&amp;','"':'&quot;',"'":"&#39;","<":"&lt;",">":"&gt;"}[m]}); }
-
-  const savedListDiv = document.getElementById('savedList');
-  const loadSavedBtn = document.getElementById('loadSavedBtn');
-  const searchInput = document.getElementById('searchInput');
-  const zoomInBtn = document.getElementById('zoomInBtn');
-  const zoomOutBtn = document.getElementById('zoomOutBtn');
-  const resetZoomBtn = document.getElementById('resetZoomBtn');
-  const tooltip = document.getElementById('tooltip');
-  const detailsDiv = document.getElementById('details');
-  const backendDot = document.getElementById('backendDot');
-  const backendText = document.getElementById('backendText');
-
-      async function fetchSavedList(){
-        savedListDiv.innerHTML = 'Loading...';
-        status.textContent = '🔎 Fetching saved uploads...';
-        try{
-          // GET the same endpoint where the backend exposes the list
-          const listRes = await fetch(LOCAL_STORE, { method: 'GET' });
-          if(!listRes.ok) throw new Error(`list fetch failed: ${listRes.status}`);
+      async function fetchSavedList() {
+        savedListDiv.innerHTML = "Loading...";
+        status.textContent = "🔎 Fetching saved uploads...";
+        try {
+          const listRes = await fetch(LOCAL_STORE);
+          if (!listRes.ok)
+            throw new Error(`list fetch failed: ${listRes.status}`);
           const data = await listRes.json();
-          savedListDiv.innerHTML = '';
-          if(!Array.isArray(data) || data.length === 0){
-            savedListDiv.innerHTML = '<div class="help">No saved uploads found.</div>';
-            status.textContent = '';
+          savedListDiv.innerHTML = "";
+          if (!Array.isArray(data) || data.length === 0) {
+            savedListDiv.innerHTML =
+              '<div class="help">No saved uploads found.</div>';
+            status.textContent = "";
             return;
           }
-          data.forEach(item=>{
-            const btn = document.createElement('button');
-            btn.className = 'btn';
-            btn.style.background = 'transparent';
-            btn.style.color = 'var(--muted)';
-            btn.style.border = '1px solid rgba(255,255,255,0.03)';
-            btn.textContent = `${item.filename || 'file'} — ${new Date(item.created_at).toLocaleString()}`;
-            btn.addEventListener('click', async ()=>{
-              try{
-                status.textContent = '⏳ Loading saved ontology...';
+          data.forEach((item) => {
+            const btn = document.createElement("button");
+            btn.className = "btn";
+            btn.style.background = "transparent";
+            btn.style.color = "var(--muted)";
+            btn.style.border = "1px solid rgba(255,255,255,0.03)";
+            btn.textContent = `${item.filename || "file"} — ${new Date(
+              item.created_at
+            ).toLocaleString()}`;
+            btn.addEventListener("click", async () => {
+              try {
+                status.textContent = "⏳ Loading saved ontology...";
                 const resp = await fetch(`${LOCAL_STORE}/${item.id}`);
-                if(!resp.ok) throw new Error('Failed to load');
+                if (!resp.ok) throw new Error("Failed to load");
                 const rec = await resp.json();
                 const ont = rec.ontology || rec;
                 const nodes = ont.nodes || ont.entities || [];
                 const relations = ont.relations || [];
-                // normalize nodes to expected shape
-                const normalizedNodes = nodes.map(n => typeof n === 'string' ? {id:n,label:n,type:'Entity'} : (n.id?{id:n.id,label:n.label||n.id,type:n.type||n.class||'Entity'}:n));
+                const normalizedNodes = nodes.map((n) =>
+                  typeof n === "string"
+                    ? { id: n, label: n, type: "Entity" }
+                    : {
+                        id: n.id,
+                        label: n.label || n.id,
+                        type: n.type || n.class || "Entity",
+                      }
+                );
                 drawGraph(normalizedNodes, relations);
-                status.textContent = 'Loaded saved ontology.';
-              }catch(err){
+                status.textContent = "Loaded saved ontology.";
+              } catch (err) {
                 console.error(err);
-                alert('Failed to load saved ontology');
-                status.textContent = '';
+                alert("Failed to load saved ontology");
+                status.textContent = "";
               }
             });
             savedListDiv.appendChild(btn);
-          })
-          status.textContent = '';
-        }catch(e){
-          console.error('fetchSavedList error', e);
-          savedListDiv.innerHTML = '<div class="help">No saved uploads (is backend running?)</div>';
-          status.textContent = '';
+          });
+          status.textContent = "";
+        } catch (e) {
+          console.error("fetchSavedList error", e);
+          savedListDiv.innerHTML =
+            '<div class="help">No saved uploads (is backend running?)</div>';
+          status.textContent = "";
         }
       }
 
-      if(loadSavedBtn){
-        loadSavedBtn.addEventListener('click', async ()=>{
-          console.log('Load Saved Graph clicked');
-          status.textContent = 'Fetching saved uploads...';
-          try{
-            await fetchSavedList();
-          }catch(e){
-            console.error('loadSavedBtn error', e);
-            status.textContent = 'Failed to fetch saved uploads.';
-          }
-        })
+      if (loadSavedBtn) {
+        loadSavedBtn.addEventListener("click", fetchSavedList);
       }
-      
 
-      // backend status ping
-      async function checkBackendStatus(){
-        try{
-          // use GET to avoid redirects and 405 on HEAD
-          const res = await fetch(LOCAL_GRAPH, {method:'GET'});
-          if(res.ok){
-            backendDot.style.background = '#6ee7b7';
-            backendText.textContent = 'Local backend: online';
+      async function checkBackendStatus() {
+        try {
+          const res = await fetch(LOCAL_GRAPH);
+          if (res.ok) {
+            backendDot.style.background = "#6ee7b7";
+            backendText.textContent = "Local backend: online";
             return true;
           }
-        }catch(e){ }
-        backendDot.style.background = '#ff6b6b';
-        backendText.textContent = 'Local backend: offline';
+        } catch {}
+        backendDot.style.background = "#ff6b6b";
+        backendText.textContent = "Local backend: offline";
         return false;
       }
-      // poll backend status a few times
+
       checkBackendStatus();
       setInterval(checkBackendStatus, 8000);
 
-      // search behavior
-      searchInput.addEventListener('keydown', async (e)=>{
-        if(e.key === 'Enter'){
-          const q = searchInput.value.trim().toLowerCase();
-          if(!q) return;
-          // try aggregated graph nodes
-          try{
-            const agg = await fetch(LOCAL_GRAPH);
-            if(agg.ok){
-              const graphData = await agg.json();
-              const found = (graphData.nodes||[]).find(n=> (n.label||n.id||'').toLowerCase().includes(q));
-              if(found){
-                // center on node by id
-                centerOnNode(found);
-              } else alert('No matching node in saved graph');
+      // Chat/query UI elements (wire Send button to local backend /api/query/)
+      const chatLog = document.getElementById('chatLog');
+      const queryInput = document.getElementById('queryInput');
+      const sendQueryBtn = document.getElementById('sendQueryBtn');
+      const clearChatBtn = document.getElementById('clearChatBtn');
+      const matchesDiv = document.getElementById('matches');
+
+      if (sendQueryBtn) {
+        sendQueryBtn.addEventListener('click', async () => {
+          const q = (queryInput && queryInput.value || '').trim();
+          if (!q) return;
+          // add user message to chat log
+          try {
+            const userDiv = document.createElement('div');
+            userDiv.style.margin = '6px 0';
+            userDiv.style.fontWeight = '700';
+            userDiv.textContent = `You: ${q}`;
+            chatLog.appendChild(userDiv);
+            chatLog.scrollTop = chatLog.scrollHeight;
+          } catch (e) { console.warn('chat append failed', e); }
+
+          try {
+            console.log('[frontend] POST /api/query/ payload=', { query: q, k: 5 });
+            const resp = await fetch('/api/query/', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ query: q, k: 5 }),
+            });
+            if (!resp.ok) {
+              const text = await resp.text();
+              console.warn('query failed', resp.status, text);
+              const errDiv = document.createElement('div');
+              errDiv.textContent = `Error: ${resp.status}`;
+              chatLog.appendChild(errDiv);
+              return;
             }
-          }catch(e){
-            alert('Search requires local backend running');
+            const data = await resp.json();
+            console.log('[frontend] /api/query/ response', data);
+            // display bot summary in chat
+            const botDiv = document.createElement('div');
+            botDiv.style.margin = '6px 0';
+            botDiv.textContent = `Found ${data.total_matches || (data.entities && data.entities.length) || 0} entities and ${data.relationships ? data.relationships.length : 0} relationships`;
+            chatLog.appendChild(botDiv);
+            chatLog.scrollTop = chatLog.scrollHeight;
+
+            // show raw JSON and matches
+            try {
+              const out = document.getElementById('output');
+              if (out) out.textContent = JSON.stringify(data, null, 2);
+            } catch (e) {}
+
+            if (matchesDiv) {
+              matchesDiv.innerHTML = '';
+              const hits = data.raw_hits || data.matches || [];
+              hits.forEach(h => {
+                const m = document.createElement('div');
+                m.style.padding = '6px';
+                m.style.border = '1px solid rgba(255,255,255,0.03)';
+                m.style.borderRadius = '6px';
+                m.style.background = 'rgba(255,255,255,0.02)';
+                m.textContent = `id:${h.id || ''} score:${h.score || ''} matched_ids:${(h.matched_ids||[]).join(',')}`;
+                matchesDiv.appendChild(m);
+              });
+            }
+            // Convert response into nodes/relations for visualization
+            try {
+              const entities = data.entities || [];
+              const relationships = data.relationships || [];
+              const nodesForGraph = entities.map(e => ({
+                id: e.id,
+                label: e.label || e.id,
+                type: e.type || 'Entity',
+                highlight: true,
+              }));
+              const relsForGraph = relationships.map(r => ({
+                source: r.source,
+                target: r.target,
+                relation: r.type || r.relation || 'related_to'
+              }));
+              if (nodesForGraph.length > 0) {
+                // draw and center on first highlighted node
+                drawGraph(nodesForGraph, relsForGraph);
+                setTimeout(()=>{
+                  try{
+                    const first = nodesForGraph[0];
+                    if (first) centerOnNode(first);
+                  }catch(e){}
+                }, 600);
+              }
+            } catch(e) { console.warn('rendering graph failed', e); }
+          } catch (err) {
+            console.error('Query error', err);
+            const errDiv = document.createElement('div');
+            errDiv.textContent = 'Query failed: ' + err.message;
+            chatLog.appendChild(errDiv);
+          }
+        });
+      }
+
+      if (clearChatBtn) {
+        clearChatBtn.addEventListener('click', () => { if (chatLog) chatLog.innerHTML = ''; if (matchesDiv) matchesDiv.innerHTML = ''; if (output) output.textContent = 'No output yet.'; });
+      }
+
+      searchInput.addEventListener("keydown", async (e) => {
+        if (e.key === "Enter") {
+          const q = searchInput.value.trim().toLowerCase();
+          if (!q) return;
+          try {
+            const agg = await fetch(LOCAL_GRAPH);
+            if (agg.ok) {
+              const graphData = await agg.json();
+              const found = (graphData.nodes || []).find((n) =>
+                (n.label || n.id || "").toLowerCase().includes(q)
+              );
+              if (found) centerOnNode(found);
+              else alert("No matching node in saved graph");
+            }
+          } catch {
+            alert("Search requires local backend running");
           }
         }
-      })
+      });
 
-      // zoom button handlers call d3 zoom when available
-      zoomInBtn.addEventListener('click', ()=>{ if(window.__svg && window.__zoom) window.__svg.transition().call(window.__zoom.scaleBy, 1.2); });
-      zoomOutBtn.addEventListener('click', ()=>{ if(window.__svg && window.__zoom) window.__svg.transition().call(window.__zoom.scaleBy, 1/1.2); });
-      resetZoomBtn.addEventListener('click', ()=>{ if(window.__svg && window.__zoom) window.__svg.transition().duration(400).call(window.__zoom.transform, d3.zoomIdentity); });
+      zoomInBtn.addEventListener("click", () => {
+        if (window.__svg && window.__zoom)
+          window.__svg.transition().call(window.__zoom.scaleBy, 1.2);
+      });
+      zoomOutBtn.addEventListener("click", () => {
+        if (window.__svg && window.__zoom)
+          window.__svg.transition().call(window.__zoom.scaleBy, 1 / 1.2);
+      });
+      resetZoomBtn.addEventListener("click", () => {
+        if (window.__svg && window.__zoom)
+          window.__svg
+            .transition()
+            .duration(400)
+            .call(window.__zoom.transform, d3.zoomIdentity);
+      });
 
-      // helper to center on a node (expects the last rendered nodes to have x/y)
-      function centerOnNode(target){
-        try{
+      function centerOnNode(target) {
+        try {
           const svg = window.__svg;
           const zoom = window.__zoom;
-          if(!svg || !zoom) return;
+          if (!svg || !zoom) return;
           const width = graphDiv.clientWidth;
           const height = graphDiv.clientHeight;
           const scale = 1.6;
-          const tx = width/2 - (target.x||0)*scale;
-          const ty = height/2 - (target.y||0)*scale;
-          svg.transition().duration(600).call(zoom.transform, d3.zoomIdentity.translate(tx,ty).scale(scale));
-        }catch(e){console.warn(e)}
+          const tx = width / 2 - (target.x || 0) * scale;
+          const ty = height / 2 - (target.y || 0) * scale;
+          svg
+            .transition()
+            .duration(600)
+            .call(
+              zoom.transform,
+              d3.zoomIdentity.translate(tx, ty).scale(scale)
+            );
+        } catch (e) {
+          console.warn(e);
+        }
       }
 
-      const refreshGraphBtn = document.getElementById('refreshGraphBtn');
-      refreshGraphBtn.addEventListener('click', async ()=>{
-        try{
+      const refreshGraphBtn = document.getElementById("refreshGraphBtn");
+      refreshGraphBtn.addEventListener("click", async () => {
+        try {
           const agg = await fetch(LOCAL_GRAPH);
-          if(agg.ok){
+          if (agg.ok) {
             const graphData = await agg.json();
             drawGraph(graphData.nodes || [], graphData.relations || []);
             return;
           }
-          alert('No aggregated graph available (is local backend running?)');
-        }catch(e){
-          alert('Failed to fetch aggregated graph: ' + e.message);
+          alert("No aggregated graph available (is local backend running?)");
+        } catch (e) {
+          alert("Failed to fetch aggregated graph: " + e.message);
         }
-      })
+      });
 
-      // refresh saved list & try to load aggregated graph on load
-      window.addEventListener('load', async ()=>{
-        // try aggregated graph first
-        try{
+      window.addEventListener("load", async () => {
+        try {
           const agg = await fetch(LOCAL_GRAPH);
-          if(agg.ok){
+          if (agg.ok) {
             const graphData = await agg.json();
-            if((graphData.nodes && graphData.nodes.length>0) || (graphData.relations && graphData.relations.length>0)){
+            if (
+              (graphData.nodes && graphData.nodes.length > 0) ||
+              (graphData.relations && graphData.relations.length > 0)
+            )
               drawGraph(graphData.nodes || [], graphData.relations || []);
-            }
           }
-        }catch(e){
-          // ignore
-        }
+        } catch {}
         fetchSavedList();
         adjustHeights();
-      })
+      });
 
-      window.addEventListener('resize', ()=>{
-        adjustHeights();
-      })
+      window.addEventListener("resize", adjustHeights);
 
-      function adjustHeights(){
-        try{
-          const topbar = document.querySelector('.topbar');
-          const appPadding = 40; // from .app padding
-          const totalH = window.innerHeight - (topbar ? topbar.clientHeight : 56) - appPadding;
-          const rightPanel = document.querySelector('.right');
-          const savedList = document.getElementById('savedList');
-          const output = document.getElementById('output');
-          if(rightPanel){
-            const maxRightH = Math.max(220, totalH - 60);
-            rightPanel.style.maxHeight = maxRightH + 'px';
-            rightPanel.style.overflow = 'auto';
+      function adjustHeights() {
+        try {
+          const topbar = document.querySelector(".topbar");
+          const totalH =
+            window.innerHeight - (topbar ? topbar.clientHeight : 56) - 40;
+          const rightPanel = document.querySelector(".right");
+          const savedList = document.getElementById("savedList");
+          const output = document.getElementById("output");
+          if (rightPanel) {
+            rightPanel.style.maxHeight = Math.max(220, totalH - 60) + "px";
+            rightPanel.style.overflow = "auto";
           }
-          if(savedList){
-            savedList.style.maxHeight = Math.max(180, totalH/2 - 40) + 'px';
-          }
-          if(output){
-            output.style.maxHeight = Math.max(140, totalH/3) + 'px';
-          }
-        }catch(e){console.warn(e)}
+          if (savedList)
+            savedList.style.maxHeight = Math.max(180, totalH / 2 - 40) + "px";
+          if (output) output.style.maxHeight = Math.max(140, totalH / 3) + "px";
+        } catch (e) {
+          console.warn(e);
+        }
       }
 
       function drawGraph(nodes, relations) {
         graphDiv.innerHTML = "";
-        const width = graphDiv.clientWidth || graphDiv.parentElement.clientWidth;
-        const height = graphDiv.clientHeight || graphDiv.parentElement.clientHeight;
+        const width =
+          graphDiv.clientWidth || graphDiv.parentElement.clientWidth;
+        const height =
+          graphDiv.clientHeight || graphDiv.parentElement.clientHeight;
 
-        // container + svg with zoom support
-        const container = d3.select('#graph').style('position','relative');
-        const svg = container.append("svg")
+        const container = d3.select("#graph").style("position", "relative");
+        const svg = container
+          .append("svg")
           .attr("width", width)
           .attr("height", height)
-          .style('background','linear-gradient(180deg, rgba(10,14,28,0.2), rgba(2,6,23,0.4))');
+          .style(
+            "background",
+            "linear-gradient(180deg, rgba(10,14,28,0.2), rgba(2,6,23,0.4))"
+          );
 
-        const inner = svg.append('g');
-
-        // zoom
-        const zoom = d3.zoom().scaleExtent([0.2, 3]).on('zoom', (event)=>{
-          inner.attr('transform', event.transform);
-        });
+        const inner = svg.append("g");
+        const zoom = d3
+          .zoom()
+          .scaleExtent([0.2, 3])
+          .on("zoom", (event) => inner.attr("transform", event.transform));
         svg.call(zoom);
-        // expose for controls
         window.__svg = svg;
         window.__zoom = zoom;
 
-        const types = Array.from(new Set(nodes.map(n=>n.type || 'Entity')));
-        const color = d3.scaleOrdinal().domain(types).range(d3.schemeTableau10.concat(d3.schemeCategory10));
+        const types = Array.from(new Set(nodes.map((n) => n.type || "Entity")));
+        const color = d3
+          .scaleOrdinal()
+          .domain(types)
+          .range(d3.schemeTableau10.concat(d3.schemeCategory10));
 
-        // render legend
-        legendDiv.innerHTML = '';
-        // clickable legend: clicking a type highlights nodes/links of that type
+        legendDiv.innerHTML = "";
         const activeTypes = new Set();
-        types.forEach(t=>{
-          const chip = document.createElement('div');
-          chip.className = 'legend-chip';
+        types.forEach((t) => {
+          const chip = document.createElement("div");
+          chip.className = "legend-chip";
           chip.style.border = `1px solid ${color(t)}`;
           chip.textContent = t;
-          chip.style.cursor = 'pointer';
-          chip.title = `Click to highlight ${t}`;
+          chip.style.cursor = "pointer";
           chip.style.opacity = 0.9;
           legendDiv.appendChild(chip);
-          chip.addEventListener('click', ()=>{
-            if(activeTypes.has(t)){
+          chip.addEventListener("click", () => {
+            if (activeTypes.has(t)) {
               activeTypes.delete(t);
               chip.style.opacity = 0.7;
             } else {
               activeTypes.add(t);
               chip.style.opacity = 1;
             }
-            updateHighlight();
           });
-        })
+        });
 
         const simulation = d3
           .forceSimulation(nodes)
@@ -734,12 +1090,7 @@
           )
           .force("charge", d3.forceManyBody().strength(-220))
           .force("center", d3.forceCenter(width / 2, height / 2))
-          .force('collision', d3.forceCollide().radius(20));
-
-        const defs = svg.append('defs');
-        defs.append('radialGradient').attr('id','nodeGlow').selectAll('stop')
-          .data([{offset:'0%', color:'rgba(255,255,255,0.6)'},{offset:'60%', color:'rgba(255,255,255,0.08)'},{offset:'100%', color:'rgba(255,255,255,0)'}])
-          .enter().append('stop').attr('offset',d=>d.offset).attr('stop-color',d=>d.color);
+          .force("collision", d3.forceCollide().radius(20));
 
         const link = inner
           .append("g")
@@ -747,8 +1098,7 @@
           .selectAll("line")
           .data(relations)
           .join("line")
-          .attr("stroke-width", 1.2)
-          .attr('opacity',0.9);
+          .attr("stroke-width", 1.2);
 
         const node = inner
           .append("g")
@@ -763,41 +1113,44 @@
               .on("end", dragEnded)
           );
 
-        node.append('circle')
-          .attr('r', 14)
-          .attr('fill', d=>color(d.type))
-          .attr('stroke','rgba(255,255,255,0.08)')
-          .attr('stroke-width',1.5)
-          .on('mouseover', (event,d)=>{
-            tooltip.style.display = 'block';
+        node
+          .append("circle")
+          .attr("r", (d) => (d.highlight ? 18 : 14))
+          .attr("fill", (d) => (d.highlight ? '#ff7675' : color(d.type)))
+          .attr("stroke", (d) => (d.highlight ? '#ff5f5f' : 'rgba(255,255,255,0.08)'))
+          .attr("stroke-width", (d) => (d.highlight ? 2.2 : 1.5))
+          .attr("class", (d) => (d.highlight ? 'node-glow' : null))
+          .attr('filter', (d) => (d.highlight ? 'url(#glow)' : null))
+          .on("mouseover", (event, d) => {
+            tooltip.style.display = "block";
             tooltip.textContent = d.label || d.id;
           })
-          .on('mousemove', (event)=>{
-            tooltip.style.left = (event.pageX + 12) + 'px';
-            tooltip.style.top = (event.pageY + 12) + 'px';
+          .on("mousemove", (event) => {
+            tooltip.style.left = event.pageX + 12 + "px";
+            tooltip.style.top = event.pageY + 12 + "px";
           })
-          .on('mouseout', ()=>{ tooltip.style.display = 'none'; })
-          .on('click', (event,d)=>{
-            // populate details
-            detailsDiv.innerHTML = `<div style="font-weight:700;color:#e6eef8">${d.label||d.id}</div><div style="color:var(--muted);margin-top:6px">Type: ${d.type||'Entity'}</div><div style="margin-top:8px;font-size:0.85rem;color:var(--muted)">ID: ${d.id}</div>`;
+          .on("mouseout", () => {
+            tooltip.style.display = "none";
+          })
+          .on("click", (event, d) => {
+            detailsDiv.innerHTML = `<div style="font-weight:700;color:#e6eef8">${
+              d.label || d.id
+            }</div><div style="color:var(--muted);margin-top:6px">Type: ${
+              d.type || "Entity"
+            }</div><div style="margin-top:8px;font-size:0.85rem;color:var(--muted)">ID: ${
+              d.id
+            }</div>`;
             output.textContent = JSON.stringify(d, null, 2);
           });
 
-        node.append('circle')
-          .attr('r', 26)
-          .attr('fill','url(#nodeGlow)')
-          .attr('opacity',0.08)
-          .lower();
-
-        node.append("text")
+        node
+          .append("text")
           .text((d) => d.label)
-          .attr('x',18)
-          .attr('y',6)
-          .attr('fill','#e6eef8')
-          .attr('font-size',12)
-          .style('pointer-events','none');
-
-  node.append('title').text(d=>d.id)
+          .attr("x", 18)
+          .attr("y", 6)
+          .attr("fill", "#e6eef8")
+          .attr("font-size", 12)
+          .style("pointer-events", "none");
 
         simulation.on("tick", () => {
           link
@@ -805,8 +1158,7 @@
             .attr("y1", (d) => d.source.y)
             .attr("x2", (d) => d.target.x)
             .attr("y2", (d) => d.target.y);
-
-          node.attr('transform', d=>`translate(${d.x},${d.y})`);
+          node.attr("transform", (d) => `translate(${d.x},${d.y})`);
         });
 
         function dragStarted(event, d) {

@@ -17,5 +17,5 @@ def home(request):
 urlpatterns = [
     path('', home, name='home'),
     path('admin/', admin.site.urls),
-    path('api/', include('ontologies.urls')),
+    path('api/', include('django_backend.ontologies.urls')),
 ]

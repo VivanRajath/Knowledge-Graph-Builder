@@ -173,18 +173,16 @@ def aggregated_graph(request):
 
 @api_view(['GET','HEAD'])
 def search_graph(request):
-
+    """Search for entities and their relationships in the local database.
+    Uses lightweight semantic search with graph traversal.
+    """
     q = request.GET.get('q', '')
     k = int(request.GET.get('k', 5))
     if not q:
         # fallback to aggregated
         return aggregated_graph(request)
-
-    # Lightweight local semantic search (dependency-free).
-    # We avoid FAISS / HF Space delegation here so Query API is self-contained
-    # and suitable for lightweight Render deployments.
-
-    # run lightweight scoring across saved Ontology records
+        
+    # Direct local search using our semantic search function
     results = query_top_k_local(q, k=k)
 
     # merge nodes/relations from results
@@ -389,55 +387,110 @@ def upload_document(request):
     # persist to DB
     try:
         o = Ontology.objects.create(filename=f.name, source='hf_space', json=ont)
-        # attempt to push the newly saved ontology to the remote Query-chat index
-        remote_result = {}
-        try:
-            from .remote_index import ingest as remote_ingest, build_remote
-            # remote expects list of {'id': int, 'ontology': dict}
-            try:
-                ingest_resp = remote_ingest([{'id': o.id, 'ontology': ont}])
-                remote_result['ingest'] = ingest_resp
-            except Exception as e:
-                remote_result['ingest_error'] = str(e)
-            # trigger remote build in background (best-effort)
-            try:
-                import threading
-                def _build():
-                    try:
-                        b = build_remote()
-                        if settings.DEBUG:
-                            print('remote build response:', b)
-                        remote_result['build'] = b
-                    except Exception as e:
-                        remote_result['build_error'] = str(e)
-                t = threading.Thread(target=_build, daemon=True)
-                t.start()
-            except Exception as e:
-                remote_result['build_error'] = str(e)
-        except Exception as e:
-            # remote_index not available or failed import — continue silently
-            remote_result['import_error'] = str(e)
-
+        # Just serialize and return the data
         serializer = OntologySerializer(o)
         resp = serializer.data
-        # include remote push/build info to aid debugging
-        resp['_remote'] = remote_result
         return Response(resp, status=status.HTTP_201_CREATED)
     except Exception as exc:
         return Response({'detail': 'Failed to save ontology', 'error': str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])
-@csrf_exempt
-def remote_query(request):
-    """Proxy query requests from frontend to the configured remote index.
-
+def query_chat(request):
+    """Local semantic search endpoint for querying entities and their relationships.
+    No remote index - uses only local DB and semantic search.
+    
     Accepts JSON {query: str, k: int}
+    Returns entities and their relationships with semantic relevance.
     """
     payload = request.data or {}
-    q = payload.get('query') or payload.get('q') or ''
-    k = int(payload.get('k') or 5)
-    if not q:
-        return Response({'detail': 'Missing query'}, status=status.HTTP_400_BAD_REQUEST)
-    results = query_top_k_local(q, k=k)
-    return Response({'results': results})
+    query = payload.get('query') or payload.get('q') or ''
+    k = int(payload.get('k', 5))
+    
+    if not query:
+        return Response({'detail': 'Query is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Use existing local semantic search
+    results = query_top_k_local(query, k=k)
+    
+    # Extract and format entities and relationships
+    entities = []
+    relationships = []
+    seen_entities = set()
+    seen_relationships = set()
+    
+    for result in results:
+        ontology = result.get('ontology', {})
+        
+        # Get nodes/entities
+        nodes = ontology.get('nodes', []) or ontology.get('entities', [])
+        for node in nodes:
+            if isinstance(node, str):
+                node_id = node
+                node_data = {'id': node, 'label': node, 'type': 'Entity'}
+            else:
+                node_id = node.get('id') or node.get('label') or node.get('name')
+                node_data = {
+                    'id': node_id,
+                    'label': node.get('label') or node.get('name') or node_id,
+                    'type': node.get('type') or node.get('class') or 'Entity',
+                    'properties': node
+                }
+            
+            if node_id and node_id not in seen_entities:
+                seen_entities.add(node_id)
+                entities.append(node_data)
+        
+        # Get relationships
+        rels = ontology.get('relations', []) or ontology.get('edges', [])
+        for rel in rels:
+            if isinstance(rel, dict):
+                source = rel.get('source') or rel.get('from')
+                target = rel.get('target') or rel.get('to')
+                rel_type = rel.get('relation') or rel.get('label') or rel.get('type') or 'related_to'
+                
+                if source and target:
+                    rel_key = (source, target, rel_type)
+                    if rel_key not in seen_relationships:
+                        seen_relationships.add(rel_key)
+                        relationships.append({
+                            'source': source,
+                            'target': target,
+                            'type': rel_type,
+                            'properties': rel
+                        })
+    
+    # Do graph traversal to find connected entities
+    G = nx.DiGraph()
+    
+    # Add all entities and relationships to graph
+    for entity in entities:
+        G.add_node(entity['id'], **entity)
+    
+    for rel in relationships:
+        G.add_edge(rel['source'], rel['target'], **rel)
+    
+    # Find connected components starting from matched entities
+    connected_entities = set()
+    for entity in entities:
+        # Do BFS traversal
+        queue = deque([entity['id']])
+        while queue:
+            node = queue.popleft()
+            if node not in connected_entities:
+                connected_entities.add(node)
+                # Add neighbors
+                if node in G:
+                    queue.extend(list(G.neighbors(node)))
+    
+    # Filter to only include connected entities and their relationships
+    final_entities = [e for e in entities if e['id'] in connected_entities]
+    final_relationships = [r for r in relationships 
+                         if r['source'] in connected_entities and r['target'] in connected_entities]
+    
+    return Response({
+        'query': query,
+        'entities': final_entities,
+        'relationships': final_relationships,
+        'total_matches': len(final_entities)
+    })

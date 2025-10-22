@@ -26,6 +26,11 @@
   const sendQueryBtn = document.getElementById('sendQueryBtn')
   const clearChatBtn = document.getElementById('clearChatBtn')
 
+  // Endpoint config for local backend
+  const ENDPOINTS = {
+    SEARCH: '/api/search_graph/'
+  }
+
   // helpers
   function addNode(label){
     const id = Date.now() + Math.floor(Math.random()*1000)
@@ -101,15 +106,92 @@
   }
 
   sendQueryBtn.addEventListener('click', async ()=>{
-    const q = queryInput.value.trim(); if(!q) return
-    appendChat('user', q); queryInput.value=''
-    // placeholder: POST to /api/query
-    try{
-  const res = await fetch('/api/query/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:q})})
-      const json = await res.json()
-      appendChat('bot', json.answer || JSON.stringify(json))
-    }catch(e){
-      appendChat('bot', 'No backend found. This is a placeholder response.')
+    const query = queryInput.value.trim()
+    if (!query) return
+    
+    appendChat('user', query)
+    queryInput.value = ''
+    output.textContent = 'Searching...'
+    
+    try {
+      // Search entities in local database
+      console.log('[frontend] sending search to', `${ENDPOINTS.SEARCH}?q=${encodeURIComponent(query)}`)
+      const res = await fetch(`${ENDPOINTS.SEARCH}?q=${encodeURIComponent(query)}`)
+      const data = await res.json()
+      
+      // Clear existing visualization
+      nodes.clear()
+      edges.clear()
+      
+      if (data.nodes && data.nodes.length > 0) {
+        // Add nodes with proper styling
+        const visNodes = data.nodes.map(node => ({
+          id: node.id,
+          label: node.label || node.id,
+          color: {
+            background: node.highlight ? '#ff7675' : '#7c3aed',
+            border: node.highlight ? '#ff5f5f' : '#6c2aed'
+          },
+          font: { color: '#ffffff' },
+          title: `Type: ${node.type || 'Entity'}`,
+          physics: true,
+          shape: 'dot',
+          size: node.highlight ? 20 : 15
+        }))
+        nodes.add(visNodes)
+        // If any node is highlighted, focus on it
+        const highlighted = visNodes.find(n => n.color && n.color.background && n.color.background === '#ff7675');
+        if (highlighted) {
+          try {
+            network.selectNodes([highlighted.id]);
+            network.focus(highlighted.id, { scale: 1.6, animation: true });
+          } catch(e) { console.warn('focus failed', e); }
+        }
+        
+        // Add relationships with proper styling
+        if (data.relations && data.relations.length > 0) {
+          const visEdges = data.relations.map(rel => ({
+            from: rel.source,
+            to: rel.target,
+            label: rel.relation || 'related_to',
+            arrows: 'to',
+            smooth: {
+              type: 'continuous',
+              roundness: 0.5
+            },
+            color: {
+              color: '#6c2aed',
+              highlight: '#ff5f5f'
+            },
+            width: 2,
+            font: { 
+              color: '#e6eef8',
+              size: 12,
+              strokeWidth: 2
+            }
+          }))
+          edges.add(visEdges)
+        }
+
+        // Improve visualization
+        network.fit({
+          animation: {
+            duration: 1000,
+            easingFunction: 'easeInOutQuad'
+          }
+        })
+        network.stabilize()
+        
+        appendChat('bot', `Found ${data.nodes.length} matching entities with ${data.relations?.length || 0} relationships`)
+        output.textContent = 'Search successful'
+      } else {
+        appendChat('bot', 'No matching entities found')
+        output.textContent = 'No matches found'
+      }
+    } catch(e) {
+      console.error('Search error:', e)
+      appendChat('bot', 'Error searching the knowledge graph: ' + e.message)
+      output.textContent = 'Search error: ' + e.message
     }
   })
 

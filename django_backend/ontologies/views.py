@@ -4,6 +4,85 @@ from rest_framework.response import Response
 from .models import Ontology
 from .serializers import OntologySerializer
 from .faiss_index import query_top_k, build_index
+from django.views.decorators.csrf import csrf_exempt
+import re
+from typing import List, Tuple
+import logging
+
+# --- Lightweight local semantic helpers (dependency-free) ---
+_token_re = re.compile(r"\w+", re.UNICODE)
+
+def _tokens(text: str):
+    return _token_re.findall((text or '').lower())
+
+def _collect_text(obj, depth: int = 0) -> List[Tuple[str, float]]:
+    texts: List[Tuple[str, float]] = []
+    if obj is None:
+        return texts
+    if isinstance(obj, str):
+        texts.append((obj, max(1.0, 3.0 - depth * 0.3)))
+        return texts
+    if isinstance(obj, (int, float, bool)):
+        texts.append((str(obj), 1.0))
+        return texts
+    if isinstance(obj, list):
+        for item in obj:
+            texts.extend(_collect_text(item, depth + 1))
+        return texts
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            key_low = str(k).lower()
+            key_weight = 1.0
+            if any(x in key_low for x in ('label', 'name', 'title', 'desc', 'summary')):
+                key_weight = 2.5
+            if isinstance(v, (str, int, float, bool)):
+                texts.append((str(v), key_weight))
+            else:
+                for t, w in _collect_text(v, depth + 1):
+                    texts.append((t, w * key_weight))
+        return texts
+    try:
+        s = str(obj)
+        texts.append((s, 1.0))
+    except Exception:
+        pass
+    return texts
+
+def _score_query_against_doc(query: str, doc_obj: dict) -> float:
+    q_tokens = set(_tokens(query))
+    if not q_tokens:
+        return 0.0
+    collected = _collect_text(doc_obj)
+    if not collected:
+        return 0.0
+    token_weights = {}
+    for text, weight in collected:
+        for t in _tokens(text):
+            token_weights[t] = token_weights.get(t, 0.0) + float(weight)
+    if not token_weights:
+        return 0.0
+    intersect = 0.0
+    doc_sum = 0.0
+    for t, w in token_weights.items():
+        doc_sum += w
+        if t in q_tokens:
+            intersect += w
+    if doc_sum <= 0:
+        return 0.0
+    score = intersect / (doc_sum + len(q_tokens))
+    return float(score)
+
+def query_top_k_local(text: str, k: int = 5):
+    results = []
+    for o in Ontology.objects.all():
+        ont = o.json or {}
+        s = _score_query_against_doc(text, ont)
+        if s > 0:
+            results.append({'id': o.id, 'score': float(s), 'ontology': ont})
+    results.sort(key=lambda x: x.get('score', 0.0), reverse=True)
+    return results[:k]
+
+# --- end helpers ---
 
 import os
 import networkx as nx
@@ -41,9 +120,13 @@ class OntologyViewSet(viewsets.ModelViewSet):
       
             return Response({'detail': 'Failed to save ontology', 'error': str(exc), 'payload_preview': str(payload)[:200]}, status=status.HTTP_400_BAD_REQUEST)
 
+logger = logging.getLogger(__name__)
+
 
 @api_view(['GET','HEAD'])
 def aggregated_graph(request):
+    logger.info('aggregated_graph called: method=%s path=%s', request.method, request.get_full_path())
+    print(f"[aggregated_graph] method={request.method} path={request.get_full_path()}")
 
     node_map = {}  # id -> node object
     relation_set = set()  # set of tuples (source, target, relation)
@@ -102,6 +185,8 @@ def search_graph(request):
 
     q = request.GET.get('q', '')
     k = int(request.GET.get('k', 5))
+    logger.info('search_graph called: q=%s k=%s method=%s path=%s', q, k, request.method, request.get_full_path())
+    print(f"[search_graph] q={q} k={k} method={request.method} path={request.get_full_path()}")
     if not q:
         # fallback to aggregated
         return aggregated_graph(request)
@@ -357,14 +442,112 @@ def upload_document(request):
 @api_view(['POST'])
 @csrf_exempt
 def remote_query(request):
-    """Proxy query requests from frontend to the configured remote index.
+    """Local-only query endpoint used by the frontend at `/api/query/`.
+
+    This intentionally does NOT call any remote index or proxy. It runs a
+    lightweight semantic score across stored Ontology.json payloads and
+    returns entities/relationships suitable for the frontend visualization.
 
     Accepts JSON {query: str, k: int}
     """
     payload = request.data or {}
+    logger.info('remote_query called: payload keys=%s method=%s path=%s', list(payload.keys()), request.method, request.get_full_path())
+    print(f"[remote_query] payload_keys={list(payload.keys())} method={request.method} path={request.get_full_path()}")
     q = payload.get('query') or payload.get('q') or ''
-    k = int(payload.get('k') or 5)
+    try:
+        k = int(payload.get('k') or 5)
+    except Exception:
+        k = 5
+    logger.info('remote_query: query=%s k=%s', q, k)
+    print(f"[remote_query] query={q} k={k}")
     if not q:
+        logger.warning('remote_query: missing query in payload')
+        print('[remote_query] missing query in payload')
         return Response({'detail': 'Missing query'}, status=status.HTTP_400_BAD_REQUEST)
-    results = query_top_k(q, k=k)
-    return Response({'results': results})
+
+    # Prefer local fast scorer; fallback to query_top_k if available and local
+    try:
+        results = query_top_k_local(q, k=k)
+        # if no results and a local index function exists, try it
+        if not results:
+            try:
+                alt = query_top_k(q, k=k)
+                if alt:
+                    results = alt
+            except Exception:
+                pass
+    except Exception:
+        results = []
+
+    # Format entities and relationships for frontend
+    entities = []
+    relationships = []
+    seen_entities = set()
+    seen_relationships = set()
+
+    for result in results:
+        ontology = result.get('ontology', {})
+
+        nodes = ontology.get('nodes', []) or ontology.get('entities', [])
+        for node in nodes:
+            if isinstance(node, str):
+                node_id = node
+                node_data = {'id': node, 'label': node, 'type': 'Entity'}
+            else:
+                node_id = node.get('id') or node.get('label') or node.get('name')
+                node_data = {
+                    'id': node_id,
+                    'label': node.get('label') or node.get('name') or node_id,
+                    'type': node.get('type') or node.get('class') or 'Entity',
+                    'properties': node
+                }
+            if node_id and node_id not in seen_entities:
+                seen_entities.add(node_id)
+                entities.append(node_data)
+
+        rels = ontology.get('relations', []) or ontology.get('edges', [])
+        for rel in rels:
+            if isinstance(rel, dict):
+                source = rel.get('source') or rel.get('from')
+                target = rel.get('target') or rel.get('to')
+                rel_type = rel.get('relation') or rel.get('label') or rel.get('type') or 'related_to'
+                if source and target:
+                    rel_key = (source, target, rel_type)
+                    if rel_key not in seen_relationships:
+                        seen_relationships.add(rel_key)
+                        relationships.append({
+                            'source': source,
+                            'target': target,
+                            'type': rel_type,
+                            'properties': rel
+                        })
+
+    # Build graph and find connected entities (small BFS)
+    G = nx.DiGraph()
+    for e in entities:
+        G.add_node(e['id'], **e)
+    for r in relationships:
+        G.add_edge(r['source'], r['target'], **r)
+
+    connected_entities = set()
+    for e in entities:
+        queue = deque([e['id']])
+        while queue:
+            node = queue.popleft()
+            if node not in connected_entities:
+                connected_entities.add(node)
+                if node in G:
+                    queue.extend(list(G.neighbors(node)))
+
+    final_entities = [e for e in entities if e['id'] in connected_entities]
+    final_relationships = [r for r in relationships if r['source'] in connected_entities and r['target'] in connected_entities]
+
+    logger.info('remote_query: returning %s entities and %s relationships', len(final_entities), len(final_relationships))
+    print(f"[remote_query] returning {len(final_entities)} entities and {len(final_relationships)} relationships")
+    return Response({
+        'query': q,
+        'entities': final_entities,
+        'relationships': final_relationships,
+        'total_matches': len(final_entities),
+        'raw_hits': results,
+    })
